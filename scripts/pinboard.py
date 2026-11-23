@@ -186,8 +186,16 @@ def main():
     ap.add_argument("--port", type=int, default=8766); ap.add_argument("--no-browser", action="store_true")
     a = ap.parse_args()
     build_board(a.root, a.proposals, a.checks)          # fail fast on a bad CSV or path
-    srv = ThreadingHTTPServer(("127.0.0.1", a.port), make_handler(a, a.port))
     url = f"http://127.0.0.1:{a.port}/"
+    try:
+        srv = ThreadingHTTPServer(("127.0.0.1", a.port), make_handler(a, a.port))
+    except OSError as e:
+        if e.errno not in (48, 98, 10048):   # address in use: macOS / Linux / Windows
+            raise
+        print(f"{a.port}번이 이미 쓰이고 있습니다. 핀보드가 이미 떠 있다면 브라우저에서 {url} 을 여세요."
+              f" 다른 핀보드를 하나 더 띄우려면 --port {a.port + 1} 처럼 다른 번호를 주세요.", flush=True)
+        if not a.no_browser: webbrowser.open(url)
+        return
     print(f"파일 핀보드(보기 전용): {url}  · 끝내려면 Ctrl+C", flush=True)
     if not a.no_browser: threading.Timer(0.6, lambda: webbrowser.open(url)).start()
     try: srv.serve_forever()
