@@ -85,6 +85,7 @@ Downloads·Desktop의 느슨한 파일은 마스터로 이동하되, 마스터�
 | `inventory.py <root> [--out csv]` | 측정 | 읽기 전용 |
 | `find_dupes.py <root> [--quarantine DIR] [--apply] [--tag "승인 문구"] [--min-free 8]` | 내용 동일 중복 찾기(크기 → sha1). 해시는 클라우드 파일을 내려받으므로 여유가 기준 아래면 아무것도 옮기지 않고 멈춤(종료 코드 3) | dry-run |
 | `apply_moves.py --root R --proposals CSV --log LOG [--preview \| --apply] [--dedupe] [--tag "승인 문구"]` | 승인된 제안 CSV(src, dest, why[, approved]) 적용. **`--root`는 src·dest의 기준 폴더**(보통 마스터, 다운로드에서 옮길 땐 둘을 다 품는 상위 폴더), dest는 폴더이고 기준 밖으로 못 나감. **승인 전에는 `--preview`**로 전체 계획을 보여 주고, "전부 승인"이면 approved 열을 모두 ✓로 채운 뒤 `--apply`(`--all` 옵션은 없다). 승인 문구는 `--tag`로 로그에 | 미리보기·dry-run, 덮어쓰기 없음, 사후 검증, 로그. 같은 볼륨 안 이동만 |
+| `pinboard.py --root R --proposals CSV [--checks D]` | 핀보드 화면(1단계): 제안표를 카드·빨간 실·목적지 칸으로 보여 주고 카드별 판정(옮길 수 있음·동명·새 폴더·원본 없음·마스터 밖·0바이트)과 체크기 빈자리를 표시. 승인 전에 사용자에게 "눈으로 보여 줘"라고 하면 이것을 띄운다 | 보기 전용, 127.0.0.1:8766 |
 | `verify_log.py --log LOG [--since 시각]` | **다시 세어 보기**: 로그에 적힌 이동·복사·폴더 신설이 실제 파일과 맞는지 독립 확인(나중에 다시 옮겨진 것은 따라감) | 읽기 전용, 불일치면 종료 코드 1 |
 | `copy_tree.py SRC DST [--exclude ...] [--min-free 8] [--allow-tight]` | 클라우드 전용 원본도 견디는 파일 단위 복사(재시도·재개·검증). **디스크 가드**: 시작 전 복사할 양과 여유를 비교해 모자라면 시작 안 함(종료 코드 2), 진행 중 기준 아래로 내려가면 깔끔히 멈춤(종료 코드 3, `STOPPED_DISK`) → 공간 확보 후 같은 명령으로 이어서 | 복사(삭제·덮어쓰기 없음, `.part`에 쓴 뒤 이름 변경, 동명 다른 파일은 충돌로 보고) |
 | `check_docsets.py --root DIR --rules JSON [--out D --name N]` | 거래 폴더별 필수 서류 검사(있음·zip 안에만·다른 폴더·부족·없음) | 읽기 전용, 보고서만 |
@@ -94,7 +95,7 @@ Downloads·Desktop의 느슨한 파일은 마스터로 이동하되, 마스터�
 | `evict_icloud.swift` | iCloud 로컬 사본 축출(클라우드 원본 불변), **macOS 전용** | `swiftc -O evict_icloud.swift -o evict_icloud` |
 | `hooks/disk_guard_hook.py` | 선택: Claude Code PreToolUse 훅. 여유가 기준 아래면 복사·해시·이동 스크립트를 시작 전에 막음(설정 예는 README) | 검사만 |
 
-새 환경에서는 먼저 `python3 tests/smoke_test.py`를 돌린다(임시 폴더에 시험 트리를 만들어 네 스크립트를 dry-run→apply로 돌리고 61개 항목을 검사, 실패 시 종료 코드 1). `--cloud-dir <OneDrive·iCloud 폴더>`를 주면 실제 동기화 폴더의 클라우드 전용 판정도 lstat만으로 확인한다. macOS에서 61개 전부 통과. Windows 11은 2026-11-13 판 28개 항목만 통과 확인(이후 항목은 미검증)이다. 디스크 가드가 멈추면(종료 코드 2·3) 사용자에게 공간 확보를 요청하고 기다린다. 기준을 낮추거나 `--min-free 0`으로 끄는 것은 사용자가 정한다.
+새 환경에서는 먼저 `python3 tests/smoke_test.py`를 돌린다(임시 폴더에 시험 트리를 만들어 네 스크립트를 dry-run→apply로 돌리고 64개 항목을 검사, 실패 시 종료 코드 1). `--cloud-dir <OneDrive·iCloud 폴더>`를 주면 실제 동기화 폴더의 클라우드 전용 판정도 lstat만으로 확인한다. macOS에서 64개 전부 통과. Windows 11은 2026-11-13 판 28개 항목만 통과 확인(이후 항목은 미검증)이다. 디스크 가드가 멈추면(종료 코드 2·3) 사용자에게 공간 확보를 요청하고 기다린다. 기준을 낮추거나 `--min-free 0`으로 끄는 것은 사용자가 정한다.
 
 스크립트를 새로 짜기 전에 이 도구들로 되는지 먼저 본다. 새로 짜면 같은 규칙(dry-run 기본, 로그, NFC, 덮어쓰기 없음)을 지킨다.
 

@@ -67,6 +67,19 @@ python3 ~/.codex/skills/file-pinboard/tests/smoke_test.py
 
 실제 2개월짜리 정리(저장소 4곳, 2만여 파일)에서 나온 방법과 스크립트입니다. 스크립트는 파이썬 표준 라이브러리만 쓰며 사람이 직접 돌려도 됩니다. macOS에서 검증했고, Windows 11에서는 기본 정리 도구까지 확인했습니다(아래 "알려진 한계"). 쉬운 설명서 한 페이지: [`docs/README.html`](docs/README.html)(받아서 브라우저로 열기).
 
+## 눈으로 보기 — 핀보드 화면 (1단계: 보기 전용)
+
+![핀보드 화면: 왼쪽 카드에서 오른쪽 목적지 칸으로 빨간 실이 이어진 모습](docs/img/pinboard_screen.jpg)
+
+AI가 만든 제안표(CSV)를 코르크 보드 위의 카드와 빨간 실로 보여 줍니다. 카드마다 "옮길 수 있음 · 같은 이름 있음 · 새 폴더 필요 · 원본 없음 · 마스터 밖 목적지 · 0바이트" 판정과 승인 여부가 붙고, 목적지 칸에는 체크기가 찾은 빈자리("?")가 보입니다. 카드를 누르면 그 실만 진해지고 근거가 뜹니다.
+
+```bash
+python3 scripts/pinboard.py --root <마스터> --proposals <제안.csv> [--checks <체크기 보고서 폴더>]   # http://127.0.0.1:8766
+```
+
+- **보기 전용:** 이름·크기만 보고 판정하므로 클라우드 파일을 내려받지 않고, 아무것도 옮기거나 쓰지 않습니다. 이 컴퓨터에서만 열립니다.
+- 화면에서 승인하고 옮기는 기능(2단계)은 아직 없습니다. 승인은 지금처럼 채팅이나 CSV의 approved 열로 합니다.
+
 ## 한눈에 보기
 
 ![파일 핀보드 한눈에 보기: 모으기, 한 바퀴, 정리 뒤 유지](docs/img/overview.svg)
@@ -86,7 +99,7 @@ references/classify.md   분류: 근거 추출 → 신뢰도 → 배치 승인 �
 references/log-format.md 로그(moves_v2.csv) 스키마와 검증 루틴
 references/docsets.md    정리가 끝난 뒤: 거래 폴더 · 필수 서류 체크기 · 제출 zip · 관제탑
 references/ontology.md   그 다음: 관계를 그래프로 다루는 최소 온톨로지
-scripts/                 inventory · find_dupes · apply_moves · verify_log · copy_tree · evict_icloud(macOS)
+scripts/                 inventory · find_dupes · apply_moves · verify_log · copy_tree · evict_icloud(macOS) · pinboard(핀보드 화면)
                          check_docsets · extract_zip_only · control_tower(관제탑) · watch(지속 관리)
 tests/smoke_test.py      새 환경에서 먼저 돌리는 자체 검사
 hooks/                   선택: Claude Code 디스크 가드 훅
@@ -110,7 +123,7 @@ Codex는 `~/.codex/skills/file-pinboard`에 같은 내용을 둡니다. 스크�
 python3 tests/smoke_test.py
 ```
 
-임시 폴더에 시험 트리를 만들어 스크립트 네 개를 dry-run → apply로 돌리고 61개 항목(NFD 이름, 동명 충돌, 격리, 덮어쓰기 없음, 재개, 디스크 가드, 체크기, zip 보관, 관제탑 보안, 지속 관리)을 검사합니다. `--cloud-dir <OneDrive·iCloud 폴더>`를 주면 실제 동기화 폴더의 클라우드 전용 판정도 읽기 전용(lstat)으로 확인합니다.
+임시 폴더에 시험 트리를 만들어 스크립트 네 개를 dry-run → apply로 돌리고 64개 항목(NFD 이름, 동명 충돌, 격리, 덮어쓰기 없음, 재개, 디스크 가드, 체크기, zip 보관, 관제탑 보안, 지속 관리)을 검사합니다. `--cloud-dir <OneDrive·iCloud 폴더>`를 주면 실제 동기화 폴더의 클라우드 전용 판정도 읽기 전용(lstat)으로 확인합니다.
 
 ## 사용
 

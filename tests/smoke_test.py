@@ -37,7 +37,7 @@ def sha(p):
 def last(out, n=-1, w=100):
     ls = [l for l in out.splitlines() if l.strip()]; return ls[n][:w] if ls else ""
 
-for d in ("src", "dst", "_정리로그", "격리", "격리2", "inv_log_test"):
+for d in ("src", "dst", "_정리로그", "격리", "격리2", "inv_log_test", "pinboard_test"):
     if os.path.isdir(os.path.join(WORK, d)): shutil.rmtree(os.path.join(WORK, d))
 A, B, C, D, E, F = (bytes([i]) * 1000 for i in (1, 2, 3, 4, 5, 6))
 put("40_프로젝트/2025_프로젝트A/기타/보고서.pdf", A)
@@ -254,6 +254,27 @@ if a.cloud_dir:
             flag += bool(getattr(st, "st_file_attributes", 0) & fileorg_lib.WIN_CLOUD_ATTRS) or bool(getattr(st, "st_flags", 0) & fileorg_lib.DATALESS)
     check("클라우드 전용 판정 = OS 플래그(읽기 전용 lstat)", n > 0 and dl == flag, f"최상위 파일 {n} · 클라우드 전용 {dl}")
     check("free_gib(cloud-dir) > 0", fileorg_lib.free_gib(a.cloud_dir) > 0, f"{fileorg_lib.free_gib(a.cloud_dir):.1f} GiB")
+
+# 9. pinboard view (stage 1, read-only): card judgments and no writes
+PB = os.path.join(WORK, "pinboard_test"); shutil.rmtree(PB, ignore_errors=True)
+for rel, n in (("00_INBOX/a.pdf", 10), ("00_INBOX/b.hwp", 20), ("40_P/증빙/b.hwp", 25), ("00_INBOX/c.pdf", 30), ("40_P/증빙/c.pdf", 30), ("00_INBOX/z.txt", 0)):
+    q = os.path.join(PB, rel); os.makedirs(os.path.dirname(q), exist_ok=True)
+    with open(q, "wb") as f: f.write(b"x" * n)
+pbp = os.path.join(WORK, "pinboard_props.csv")
+with open(pbp, "w", newline="", encoding="utf-8-sig") as f:
+    w = csv.writer(f); w.writerow(["src", "dest", "why", "approved"])
+    for row in (("00_INBOX/a.pdf", "40_P/보고", "", "✓"), ("00_INBOX/b.hwp", "40_P/증빙", "", "✓"), ("00_INBOX/c.pdf", "40_P/증빙", "", ""),
+                ("00_INBOX/z.txt", "40_P/증빙", "", ""), ("00_INBOX/없음.pdf", "40_P/증빙", "", ""), ("00_INBOX/a.pdf", "../밖", "", "")):
+        w.writerow(row)
+before = sorted(os.path.relpath(os.path.join(dp, n), PB) for dp, dn, fn in os.walk(PB) for n in fn + dn)
+sys.path.insert(0, SK); import pinboard
+bd = pinboard.build_board(PB, pbp); cs = {i: c for i, c in enumerate(bd["cards"], 1)}
+after = sorted(os.path.relpath(os.path.join(dp, n), PB) for dp, dn, fn in os.walk(PB) for n in fn + dn)
+check("핀보드: 새 폴더 필요·동명 다른 크기·동명 같은 크기·0바이트·원본 없음·마스터 밖을 각각 판정",
+      "새 폴더 필요" in cs[1]["flags"] and any("다른 크기" in f for f in cs[2]["flags"]) and any("같은 크기" in f for f in cs[3]["flags"])
+      and "0바이트" in cs[4]["flags"] and cs[5]["state"] == "bad" and "마스터 밖 목적지" in cs[6]["flags"], json.dumps([c["flags"] for c in bd["cards"]], ensure_ascii=False)[:150])
+check("핀보드: 승인 수 2 · 목적지 칸 묶음", bd["counts"]["approved"] == 2 and any(c["dest"] == "40_P/증빙" and len(c["cards"]) == 4 for c in bd["columns"]))
+check("핀보드: 화면을 그려도 파일·폴더를 하나도 바꾸지 않음(보기 전용)", before == after)
 
 p = sum(ok for _, ok in R); print(f"\n결과: PASS {p} / FAIL {len(R) - p} / 총 {len(R)} · {sys.platform} Python {sys.version.split()[0]}", flush=True)
 if not a.keep and not a.work:
